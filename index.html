@@ -12,6 +12,7 @@
     --btn-active: #2b6cb0;
     --text: #f2f2f2;
     --bottom-h: 22vh;      /* height of bottom bar */
+    --gap: 1vh;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
@@ -30,10 +31,10 @@
     border: 1px solid var(--line);
   }
 
-  /* ---------- TOP: YouTube + Chrome link ---------- */
+  /* ---------- TOP: Tile 1 (YouTube, wider) + Tile 2 (web page) ---------- */
   .top {
     display: grid;
-    grid-template-columns: 1fr 1fr;      /* change to 3fr 2fr etc. to resize */
+    grid-template-columns: 68fr 32fr;   /* tile 1 wider than tile 2 */
     border-bottom: 1px solid var(--line);
     min-height: 0;
   }
@@ -44,15 +45,14 @@
   /* ---------- BOTTOM BAR ---------- */
   .bottom {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) minmax(0, 0.9fr);
-    align-items: center;
-    gap: 2vw;
-    padding: 1.2vh 2vw;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 1.2vw;
+    padding: var(--gap) 1.5vw;
     min-height: 0;
   }
 
   .qr {
-    height: calc(var(--bottom-h) - 3vh);
+    height: 100%;
     aspect-ratio: 1 / 1;
     background: #fff;
     border: 1px solid var(--line);
@@ -61,12 +61,18 @@
   }
   .qr img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
 
+  .right {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: var(--gap);
+    min-width: 0; min-height: 0;
+  }
+
   .titles {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 1vh 0.8vw;
-    height: calc(var(--bottom-h) - 3vh);
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.8vw;
+    min-height: 0;
   }
   .titles button {
     background: var(--btn);
@@ -80,32 +86,27 @@
     font-weight: 600;
     font-size: clamp(11px, 1.1vw, 20px);
     line-height: 1.2;
+    min-width: 0;
   }
   .titles button small { display: block; font-weight: 400; opacity: .6; font-size: .8em; }
   .titles button:hover { border-color: #888; }
   .titles button.active { background: var(--btn-active); border-color: #63a4ff; }
   .titles button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
+  /* Logo tile: one wide strip, white background */
   .logos {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 1vh 0.6vw;
-    height: calc(var(--bottom-h) - 3vh);
-    justify-items: center;
-    align-items: center;
-  }
-  .logos .logo {
-    height: 100%;
-    max-height: 9vh;
-    aspect-ratio: 1 / 1;
-    border-radius: 50%;
     background: #fff;
     border: 1px solid var(--line);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 1vw;
+    padding: 0.6vh 1.5vw;
+    min-height: 0;
     overflow: hidden;
-    display: grid; place-items: center;
   }
-  .logos .logo img { width: 100%; height: 100%; object-fit: contain; padding: 12%; }
+  .logos img { height: 100%; max-height: 100%; width: auto; max-width: 12%; object-fit: contain; }
 </style>
 </head>
 <body>
@@ -120,8 +121,10 @@
   <!-- BOTTOM -->
   <section class="bottom">
     <div class="qr"><img id="qr" alt="QR code"></div>
-    <div class="titles" id="titles"></div>
-    <div class="logos" id="logos"></div>
+    <div class="right">
+      <div class="titles" id="titles"></div>
+      <div class="logos" id="logos"></div>
+    </div>
   </section>
 
 </div>
@@ -134,28 +137,25 @@ const CONFIG = {
   // Any YouTube link (watch, youtu.be, or embed). Autoplays muted & loops.
   youtube: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
 
-  // Right panel: page shown on load (usually the first title's link)
+  // Tile 2: page shown on load
   defaultLink: "https://example.com",
 
-  // QR image (put a file in /images and use e.g. "images/qr.png")
+  // QR image (put a file in /images)
   qr: "images/qr.png",
 
-  // 6 titles. Clicking one loads its link in the right panel.
+  // 5 titles. Clicking one loads its link in tile 2.
   titles: [
     { title: "Title 1", link: "https://example.com" },
     { title: "Title 2", link: "https://example.com" },
     { title: "Title 3", link: "https://example.com" },
     { title: "Title 4", link: "https://example.com" },
-    { title: "Title 5", link: "https://example.com" },
-    { title: "Title 6", link: "https://example.com" }
+    { title: "Title 5", link: "https://example.com" }
   ],
 
-  // 12 logos (put files in /images). Leave "" for a blank circle.
+  // Logos shown in the white strip (any number; they spread evenly).
   logos: [
-    "images/logo1.png",  "images/logo2.png",  "images/logo3.png",
-    "images/logo4.png",  "images/logo5.png",  "images/logo6.png",
-    "images/logo7.png",  "images/logo8.png",  "images/logo9.png",
-    "images/logo10.png", "images/logo11.png", "images/logo12.png"
+    "images/logo1.png", "images/logo2.png", "images/logo3.png",
+    "images/logo4.png", "images/logo5.png", "images/logo6.png"
   ]
 };
 /* ========================================================= */
@@ -169,7 +169,7 @@ function ytEmbed(url) {
 }
 document.getElementById("yt").src = ytEmbed(CONFIG.youtube);
 
-// ---- Right panel ----
+// ---- Tile 2 ----
 const chrome = document.getElementById("chrome");
 chrome.src = CONFIG.defaultLink;
 
@@ -180,7 +180,7 @@ qr.onerror = () => { qr.style.display = "none"; qr.parentElement.textContent = "
 
 // ---- Titles ----
 const titlesEl = document.getElementById("titles");
-CONFIG.titles.forEach((t, i) => {
+CONFIG.titles.forEach(t => {
   const b = document.createElement("button");
   b.innerHTML = `${t.title}<small>Connect to Google Chrome</small>`;
   if (t.link === CONFIG.defaultLink && !titlesEl.querySelector(".active")) b.classList.add("active");
@@ -195,15 +195,10 @@ CONFIG.titles.forEach((t, i) => {
 // ---- Logos ----
 const logosEl = document.getElementById("logos");
 CONFIG.logos.forEach(src => {
-  const d = document.createElement("div");
-  d.className = "logo";
-  if (src) {
-    const img = document.createElement("img");
-    img.src = src; img.alt = "";
-    img.onerror = () => img.remove();
-    d.appendChild(img);
-  }
-  logosEl.appendChild(d);
+  const img = document.createElement("img");
+  img.src = src; img.alt = "";
+  img.onerror = () => img.remove();
+  logosEl.appendChild(img);
 });
 </script>
 </body>
