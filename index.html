@@ -135,26 +135,33 @@
    ========================================================= */
 const CONFIG = {
   // Any YouTube link (watch, youtu.be, or embed). Autoplays muted & loops.
-  youtube: "https://www.youtube.com/watch?v=xsb2exJlckk&list=PLavjQQeh9hl0",
+  youtube: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
 
   // Tile 2: page shown on load
-  defaultLink: "https://www.mphs.gov.my/ms/",
+  defaultLink: "https://example.com",
 
   // QR image (put a file in /images)
   qr: "images/qr.png",
 
-  // 5 titles. Clicking one loads its link in tile 2.
+  // 5 titles. Clicking one shows its link in tile 2.
+  // mode: "embed"  -> loads inside tile 2 (only works if the site allows it)
+  // mode: "window" -> opens in a separate window placed over tile 2
+  //                   (use this for sites that show the sad-face error:
+  //                    Facebook, TikTok, Google, many login pages)
+  // mode: "proxy"  -> loads inside tile 2 through /api/proxy (for simple sites
+  //                   like www.mphs.gov.my; site must be listed in api/proxy.js)
   titles: [
-    { title: "Portal MPHS", link: "https://www.mphs.gov.my/ms/", mode: "window" },
-    { title: "TikTok", link: "https://www.tiktok.com/@mphuluselangor" },
-    { title: "Facebook", link: "https://web.facebook.com/MajlisPerbandaranHuluSelangor/?_rdc=1&_rdr#" },
-    { title: "Bas Smart Selangor", link: "https://www.google.com/maps/d/edit?mid=14x1ESXK43ERxC4qmukH57ugc2AybpM8&usp=sharing" },
-    { title: "EIS MPHS", link: "https://eis.mphs.gov.my/portal/apps/sites/#/eis-mphs/apps/3c229f568e414b3d90efa92203525dd4/explore" }
+    { title: "Title 1", link: "https://example.com", mode: "embed" },
+    { title: "Title 2", link: "https://example.com", mode: "window" },
+    { title: "Title 3", link: "https://example.com", mode: "window" },
+    { title: "Title 4", link: "https://example.com", mode: "embed" },
+    { title: "Title 5", link: "https://example.com", mode: "embed" }
   ],
 
   // Logos shown in the white strip (any number; they spread evenly).
   logos: [
-    "images/logo1.png",
+    "images/logo1.png", "images/logo2.png", "images/logo3.png",
+    "images/logo4.png", "images/logo5.png", "images/logo6.png"
   ]
 };
 /* ========================================================= */
@@ -170,7 +177,35 @@ document.getElementById("yt").src = ytEmbed(CONFIG.youtube);
 
 // ---- Tile 2 ----
 const chrome = document.getElementById("chrome");
-chrome.src = CONFIG.defaultLink;
+
+function showMessage(text) {
+  chrome.srcdoc = `<body style="margin:0;height:100vh;display:grid;place-items:center;background:#111;color:#bbb;font:600 18px system-ui;text-align:center;padding:20px">${text}</body>`;
+}
+
+function openInTile(t) {
+  if (t.mode === "window") {
+    // place a popup window exactly over tile 2
+    const r = chrome.getBoundingClientRect();
+    const barH = window.outerHeight - window.innerHeight; // browser toolbar height (0 in F11)
+    const left = Math.round(window.screenX + r.left);
+    const top  = Math.round(window.screenY + barH + r.top);
+    window.open(t.link, "tile2",
+      `popup=yes,left=${left},top=${top},width=${Math.round(r.width)},height=${Math.round(r.height)}`);
+    showMessage("Opened in a separate window");
+  } else if (t.mode === "proxy") {
+    chrome.removeAttribute("srcdoc");
+    chrome.src = "/api/proxy?url=" + encodeURIComponent(t.link);
+  } else {
+    chrome.removeAttribute("srcdoc");
+    chrome.src = t.link;
+  }
+}
+
+// initial content of tile 2
+const first = CONFIG.titles.find(t => t.link === CONFIG.defaultLink) || CONFIG.titles[0];
+if (first.mode === "window") showMessage("Click a title to open it here");
+else if (first.mode === "proxy") chrome.src = "/api/proxy?url=" + encodeURIComponent(first.link);
+else chrome.src = CONFIG.defaultLink;
 
 // ---- QR ----
 const qr = document.getElementById("qr");
@@ -184,7 +219,7 @@ CONFIG.titles.forEach(t => {
   b.innerHTML = `${t.title}<small>Connect to Google Chrome</small>`;
   if (t.link === CONFIG.defaultLink && !titlesEl.querySelector(".active")) b.classList.add("active");
   b.addEventListener("click", () => {
-    chrome.src = t.link;
+    openInTile(t);
     titlesEl.querySelectorAll("button").forEach(x => x.classList.remove("active"));
     b.classList.add("active");
   });
